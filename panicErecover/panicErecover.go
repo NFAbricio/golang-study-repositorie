@@ -9,11 +9,11 @@ func recuperandoDefer() {
 func alunoAporvado(n1, n2 float64) bool {
 	defer recuperandoDefer()
 
-	defer func() {
-		if r := recover(); r != nil {
-			fmt.Println("função recuparada apesar do panic")
-		}
-	}()
+	// defer func() {
+	// 	if r := recover(); r != nil {
+	// 		fmt.Println("função recuparada apesar do panic")
+	// 	}
+	// }()
 
 	media := (n1 + n2) / 2
 
