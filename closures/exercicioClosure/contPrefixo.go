@@ -7,15 +7,15 @@ import (
 
 func contadorDePrefixo(prefixo string) func(string) bool {
 
-	pre := prefixo
-	cont := 0
+	verificador := prefixo
+	contador := 0
 	return func(palavra string) bool {
-		if strings.HasPrefix(palavra, pre) {
-			cont += 1
-			fmt.Printf("Quantidade de True: %d -> ", cont)
+		if strings.HasPrefix(palavra, verificador) {
+			contador += 1
+			fmt.Printf("Quantidade de True: %d -> ", contador)
 			return true
 		} else {
-			fmt.Printf("Quantidade de True: %d -> ", cont)
+			fmt.Printf("Quantidade de True: %d -> ", contador)
 			return false
 		}
 	}
