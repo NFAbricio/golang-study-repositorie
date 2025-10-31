@@ -2,6 +2,8 @@ package main
 
 import (
 	"encoding/json"
+	"errors"
+	"io"
 	"net/http"
 	"strconv"
 
@@ -35,7 +37,7 @@ func main() {
 	r.Group(func(r chi.Router)  {
 		r.Use(jsonMiddleware)//função use é para middleware
 		r.Get("/users/{id:[0-9]+}", handleGetUsers(db)) //regex para garantir que seja numero
-		r.Post("/users", handlePostUsers)
+		r.Post("/users", handlePostUsers(db))
 	})
 
 	if err := http.ListenAndServe(":8080", r); err != nil {
@@ -57,15 +59,41 @@ func handleGetUsers(db map[int64]User) http.HandlerFunc {
 		id, _ := strconv.ParseInt(idStr, 10, 64) //estamos ignorando um erro, ja q o regex n permite ele ter, mas mesmoa ssim ele pode ocorrer se o numero for overflow. NÃO ´É BOA PRATICA
 
 		user, ok := db[id]
-		if ok {
-			data, err := json.Marshal(user)
-			if err != nil {
-				panic(err)
-			}
-
-			w.Write(data)
+		if !ok {
+			http.Error(w, "User not found", http.StatusNotFound)
+			return
 		}
+
+		data, err := json.Marshal(user)
+		if err !=nil {
+			http.Error(w, "Something going wrong", http.StatusInternalServerError)
+			return 
+		}
+
+		_, _ = w.Write(data)
 	}
 }
 
-func handlePostUsers(w http.ResponseWriter, r *http.Request) {}
+func handlePostUsers(db map[int64]User) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request){
+	r.Body = http.MaxBytesReader(w, r.Body, 100000)
+	data, err := io.ReadAll(r.Body)
+	if err != nil {
+		var maxErr *http.MaxBytesError
+		if errors.As(err, &maxErr){
+			http.Error(w, "Request body too large", http.StatusRequestEntityTooLarge)
+			return
+		}
+	}
+
+	var user User
+	if err := json.Unmarshal(data, &user); err != nil {
+		http.Error(w, "invalid body", http.StatusUnprocessableEntity)
+		return
+	}
+
+	db[user.ID] = user
+
+	w.WriteHeader(http.StatusCreated)
+  }
+}
