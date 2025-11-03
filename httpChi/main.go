@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"strconv"
@@ -10,6 +11,27 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 )
+
+type Response struct {
+	Error string `json:"error,omitempty"`
+	Data any `json:"data,omitempty"`
+}
+
+func sendJSON(w http.ResponseWriter, resp Response, status int) {
+	data, err:= json.Marshal(resp)
+	if err != nil {
+		fmt.Println("error when trying do Marshal", err)
+		sendJSON(w, Response{Error:"something went wrong"}, http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(status)
+	if _, err := w.Write(data); err != nil{
+		fmt.Println("Error to send response", err)
+		return
+	}
+
+}
 
 type User struct {
 	ID int64 `json:",string"` // para numeros enormes, o discord faz isso
@@ -60,17 +82,11 @@ func handleGetUsers(db map[int64]User) http.HandlerFunc {
 
 		user, ok := db[id]
 		if !ok {
-			http.Error(w, "User not found", http.StatusNotFound)
+			sendJSON(w, Response{Error: "user not found"}, http.StatusNotFound)
 			return
 		}
 
-		data, err := json.Marshal(user)
-		if err !=nil {
-			http.Error(w, "Something going wrong", http.StatusInternalServerError)
-			return 
-		}
-
-		_, _ = w.Write(data)
+		sendJSON(w, Response{Data: user}, http.StatusOK)
 	}
 }
 
@@ -81,14 +97,18 @@ func handlePostUsers(db map[int64]User) http.HandlerFunc {
 	if err != nil {
 		var maxErr *http.MaxBytesError
 		if errors.As(err, &maxErr){
-			http.Error(w, "Request body too large", http.StatusRequestEntityTooLarge)
+			sendJSON(w, Response{Error: "body too large"}, http.StatusRequestEntityTooLarge)
 			return
 		}
+
+		fmt.Println(err)
+		sendJSON(w, Response{Error: "body too large"}, http.StatusRequestEntityTooLarge)
+		return
 	}
 
 	var user User
 	if err := json.Unmarshal(data, &user); err != nil {
-		http.Error(w, "invalid body", http.StatusUnprocessableEntity)
+		sendJSON(w, Response{Error: "invalid body"}, http.StatusUnprocessableEntity)
 		return
 	}
 
