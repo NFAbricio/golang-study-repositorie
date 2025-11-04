@@ -1,12 +1,15 @@
 package main
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
-	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
+	"os"
 	"strconv"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -20,14 +23,14 @@ type Response struct {
 func sendJSON(w http.ResponseWriter, resp Response, status int) {
 	data, err:= json.Marshal(resp)
 	if err != nil {
-		fmt.Println("error when trying do Marshal", err)
+		slog.Error("error when trying do marshal", "error", err)
 		sendJSON(w, Response{Error:"something went wrong"}, http.StatusInternalServerError)
 		return
 	}
 
 	w.WriteHeader(status)
 	if _, err := w.Write(data); err != nil{
-		fmt.Println("Error to send response", err)
+		slog.Error("error to send response", "error", err)
 		return
 	}
 
@@ -41,6 +44,16 @@ type User struct {
 }
 
 func main() {
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
+	slog.SetDefault(logger)
+	slog.Info("iniciating service", "time", time.Now(), "version", "1.0.0")
+	slog.LogAttrs(context.Background(), slog.LevelInfo, "http request", 
+		slog.String("method", http.MethodDelete),
+		slog.Duration("time_tanken", time.Second),
+		slog.Int("status", http.StatusOK),
+		)
+
+	//slog.Warn("test") -> another type of log
 	r := chi.NewMux()
 
 	r.Use(middleware.Recoverer)
@@ -101,7 +114,7 @@ func handlePostUsers(db map[int64]User) http.HandlerFunc {
 			return
 		}
 
-		fmt.Println(err)
+		slog.Error("fail to read user", "error", err)
 		sendJSON(w, Response{Error: "body too large"}, http.StatusRequestEntityTooLarge)
 		return
 	}
