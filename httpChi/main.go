@@ -40,15 +40,32 @@ type User struct {
 	ID int64 `json:",string"` // para numeros enormes, o discord faz isso
 	Username string
 	Role string
-	Password string `json:"-"` //ignorar o campo, pra ele n vir no body
+	Password Password `json:"-"` //ignorar o campo, pra ele n vir no body
+}
+
+type Password string
+
+func (p Password) LogValue() slog.Value{
+	return slog.StringValue("[REDACTED]")
 }
 
 func main() {
-	logger := slog.New(slog.NewJSONHandler(os.Stdout, nil))
-	slog.SetDefault(logger)
+	p := Password("hsgdhsdg")
+	slog.Info("Password", "p", p)
+	
+	opts := &slog.HandlerOptions{
+		AddSource: true,
+		Level:     nil,
+		ReplaceAttr: nil,
+	}
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, opts))//log to json
+	slog.SetDefault(logger) // set all log default
+	logger = slog.With(slog.Group("app_info", slog.String("version", "1.0.0")))
 	slog.Info("iniciating service", "time", time.Now(), "version", "1.0.0")
-	slog.LogAttrs(context.Background(), slog.LevelInfo, "http request", 
-		slog.String("method", http.MethodDelete),
+	logger.LogAttrs(context.Background(), slog.LevelInfo, "http request",
+		slog.Group("http_data", // output explained in terminal
+			slog.String("method", http.MethodDelete),
+		) ,
 		slog.Duration("time_tanken", time.Second),
 		slog.Int("status", http.StatusOK),
 		)
