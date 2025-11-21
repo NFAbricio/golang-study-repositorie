@@ -1,0 +1,25 @@
+services:
+  postgres:
+    image: postgres:16.2
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: myuser
+      POSTGRES_DB: mydb
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_password
+    secrets:
+      - db_password
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - private
+
+secrets:
+  db_password:
+    file: ./db_key.txt
+
+volumes:
+  db_data:
+
+networks:
+  private:

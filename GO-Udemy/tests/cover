@@ -1,0 +1,7 @@
+mode: set
+goCurso/tests/adress.go:5.42,11.33 4 1
+goCurso/tests/adress.go:11.33,12.24 1 1
+goCurso/tests/adress.go:12.24,14.4 1 1
+goCurso/tests/adress.go:17.2,17.17 1 1
+goCurso/tests/adress.go:17.17,19.3 1 1
+goCurso/tests/adress.go:21.2,21.23 1 0
