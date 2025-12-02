@@ -6,7 +6,7 @@ import (
 	"log"
 
 	"github.com/IBM/sarama"
-	"github.com/gofiber/fiber"
+	"github.com/gofiber/fiber/v2"
 )
 
 type Comment struct {
@@ -16,7 +16,7 @@ type Comment struct {
 func main() {
 	app := fiber.New()
 	api := app.Group("/api/v1")
-	api.Post("/comments", createComment) // This line is already correct, no change needed for the error "cannot use createComment (value of type func(c *fiber.Ctx) error) as fiber.Handler value in argument to api.Post"
+	api.Post("/comments", createComment)
 	app.Listen(":3000")
 }
 

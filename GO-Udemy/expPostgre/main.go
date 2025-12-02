@@ -50,8 +50,8 @@ func main() {
 
 	createTableSQL := `CREATE TABLE IF NOT EXISTS users (
 		id SERIAL PRIMARY KEY,
-		name VARCHAR(50) not null,
-		email VARCHAR(50) not null
+		name VARCHAR(50),
+		email VARCHAR(50)
 	);`
 
 	_, err = db.Exec(createTableSQL)
@@ -59,24 +59,57 @@ func main() {
 		panic(fmt.Sprintf("Erro ao criar a tabela: %v", err))
 	}
 
-	insertSql := ` INSERT INTO users (name, email) VALUES ('jon calhou', 'jon@calhoun.io')`
-	res, err := db.Exec(insertSql)
-	if err != nil {
+	
+	//INSERT A USER
+	// insertSql := ` INSERT INTO users (name, email) VALUES ('jon calhou', 'jon@calhoun.io')`
+	// res, err := db.Exec(insertSql)
+	// if err != nil {
+	// 	panic(err)
+	// }
+	// fmt.Println(res)
+
+	// querySql := `
+	// SELECT * FROM users WHERE id = $1
+	// `
+
+	
+
+	//ADD ID
+	// for id := 2; id < 10; id++ {
+	// 	_, err := db.Exec("insert into users (id) values ($1)", id)
+	// 	if err != nil {
+	// 		panic(err)
+	// 	}
+	// }
+
+	var count int64
+	if err := db.QueryRow("select count(*) from users").Scan(&count); err != nil {
 		panic(err)
 	}
-	fmt.Println(res)
+	fmt.Println(count)
 
-	querySql := `
-	SELECT * FROM users WHERE id = $1
-	`
 
-	var u User
-	err = db.QueryRow(querySql, 1).Scan(&u.ID, &u.Name, &u.Email)
-	if err != nil {
+	//SQL Injection
+	// input := "1 OR 1 = 1"
+	// deleteSql := "DELETE FROM users WHERE id = $1"
+	// if _, err := db.Exec(deleteSql, input); err != nil {
+	// 	panic(err)
+	// }
+
+	if err := db.QueryRow("select count(*) from users").Scan(&count); err != nil {
 		panic(err)
 	}
+	fmt.Println(count)
+	
+	
+	//PRINT USER
+	// var u User
+	// err = db.QueryRow(querySql, 1).Scan(&u.ID, &u.Name, &u.Email)
+	// if err != nil {
+	// 	panic(err)
+	// }
 
-	fmt.Println(u)
+	// fmt.Println(u)
 
 
 }
