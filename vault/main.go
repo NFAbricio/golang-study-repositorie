@@ -7,7 +7,6 @@ import (
 
 	"github.com/hashicorp/vault-client-go"
 	"github.com/hashicorp/vault-client-go/schema"
-
 )
 
 func main() {
