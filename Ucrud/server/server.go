@@ -188,3 +188,38 @@ func UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 }
+
+func DeleteUser(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+	ID, err := strconv.ParseUint(params["id"], 10, 32)
+	if err != nil {
+		w.Write([]byte("error to convert id"))
+		return
+	}
+
+	db, err := db.InitDB()
+	if err != nil {
+		w.Write([]byte("error to connect database"))
+		fmt.Println("Error to connect database:", err)
+		return
+	}
+	defer db.Close()
+
+	statement, err := db.Prepare("DELETE FROM users WHERE id = $1")
+	if err != nil {
+		w.Write([]byte("Error to prepare statement"))
+		log.Printf("Error: %v", err)
+		return
+	}
+	defer statement.Close()
+
+	if _, err := statement.Exec(ID); err != nil {
+		w.Write([]byte("Error to delete user"))
+		log.Printf("Error: %v", err)
+		return
+	}
+
+	w.WriteHeader(http.StatusNoContent)
+
+
+}
