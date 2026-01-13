@@ -121,6 +121,7 @@ func GetUserByID(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("Error to connect database:", err)
 		return
 	}
+	defer db.Close()
 
 	row, err := db.Query("SELECT * FROM users WHERE id = $1", ID)
 	if err != nil {
@@ -139,6 +140,50 @@ func GetUserByID(w http.ResponseWriter, r *http.Request) {
 
 	if err := json.NewEncoder(w).Encode(user); err != nil {
 		w.Write([]byte("Error to encode user"))
+		log.Printf("Error: %v", err)
+		return
+	}
+}
+
+func UpdateUser(w http.ResponseWriter, r *http.Request) {
+	params := mux.Vars(r)
+
+	ID, err := strconv.ParseUint(params["id"], 10, 32)
+	if err != nil {
+		w.Write([]byte("error to convert id"))
+		return
+	}
+
+	body, err := io.ReadAll(r.Body)
+	if err != nil {
+		http.Error(w, "error to read body", http.StatusBadRequest)
+		return
+	}
+
+	var user User
+	if err = json.Unmarshal(body, &user); err != nil {
+		http.Error(w, "error to unmarshal", http.StatusBadRequest)
+		fmt.Println("Error to unmarshal:", err)
+		return
+	}
+
+	db, err := db.InitDB()
+	if err != nil {
+		w.Write([]byte("error to connect database"))
+		fmt.Println("Error to connect database:", err)
+		return
+	}
+	defer db.Close()
+
+	statement, err := db.Prepare("UPDATE users SET age=$1, first_name=$2, last_name=$3, email=$4 WHERE id=$5"); if err != nil {
+		w.Write([]byte("Error to prepare statement"))
+		log.Printf("Error: %v", err)
+		return
+	}
+	defer statement.Close()
+
+	if _, err := statement.Exec(user.Age, user.FirstName, user.LastName, user.Email, ID); err != nil {
+		w.Write([]byte("Error to update user"))
 		log.Printf("Error: %v", err)
 		return
 	}
